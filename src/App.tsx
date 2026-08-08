@@ -468,8 +468,8 @@ export default function App() {
     }
   };
 
-  // Render Loading Screen during session verification
-  if (isAuthChecking) {
+  // Render Loading Screen during session verification & database hydration
+  if (isAuthChecking || dbStatus.checking) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-slate-100">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#176B45] to-[#0F5132] text-white shadow-xl shadow-[#0F5132]/40 flex items-center justify-center mb-4 animate-pulse">
@@ -479,7 +479,7 @@ export default function App() {
         <div className="flex items-center space-x-3 bg-slate-900 border border-slate-800 px-5 py-3 rounded-xl shadow-lg">
           <RefreshCw className="w-5 h-5 text-[#2E7D5B] animate-spin" />
           <span className="text-sm font-semibold text-slate-200">
-            Verifying Security & Session Authorization...
+            {isAuthChecking ? 'Verifying Security & Session Authorization...' : 'Connecting & Hydrating Production Data...'}
           </span>
         </div>
     

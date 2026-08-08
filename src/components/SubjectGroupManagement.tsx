@@ -164,20 +164,20 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner / Info Header */}
-      <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
-            <Layers className="w-6 h-6 text-[#176B45]" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+            <Layers className="w-6 h-6 text-[#176B45] dark:text-emerald-400" />
             <span>Subject Groups ({targetLevel}: {gradeListStr})</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Configure CBC subject groups for {gradeListStr}. Grouped learning areas combine marks, calculate weighted averages, performance levels, and dynamically generate Merit Lists, Report Cards, and Analytics.
           </p>
         </div>
 
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center space-x-2 bg-[#176B45] hover:bg-[#0F5132] text-white text-xs font-bold px-4 py-2.5 rounded-lg transition shadow-xs whitespace-nowrap"
+          className="inline-flex items-center space-x-2 bg-[#176B45] hover:bg-[#0F5132] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition shadow-xs whitespace-nowrap cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add Subject Group</span>
@@ -186,29 +186,29 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
 
       {/* Global Alerts */}
       {successMsg && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center space-x-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {/* Main Groups Table Card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-800 flex items-center space-x-2">
-            <BookOpen className="w-4 h-4 text-slate-600" />
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+            <BookOpen className="w-4 h-4 text-slate-600 dark:text-slate-400" />
             <span>Configured {targetLevel} Subject Groups ({groups.length})</span>
           </h2>
-          <span className="text-xs text-slate-500 font-medium bg-slate-200/60 px-2.5 py-1 rounded-full">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium bg-slate-200/60 dark:bg-slate-800 px-2.5 py-1 rounded-full border border-transparent dark:border-slate-700">
             Scope: {gradeListStr} Only
           </span>
         </div>
 
         {groups.length === 0 ? (
           <div className="p-8 text-center space-y-3">
-            <Layers className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-sm font-bold text-slate-700">No Subject Groups Configured</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
+            <Layers className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">No Subject Groups Configured</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               Click "Add Subject Group" above to configure combined or individual learning area groups for {targetLevel}.
             </p>
           </div>
@@ -216,7 +216,7 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-700 uppercase tracking-wider font-bold">
+                <tr className="bg-slate-100/70 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 uppercase tracking-wider font-bold">
                   <th className="py-3 px-4 w-16 text-center">Order</th>
                   <th className="py-3 px-4">Group Code</th>
                   <th className="py-3 px-4">Group Name</th>
@@ -225,33 +225,33 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                 {groups.map((grp) => {
                   const memberSubjects = subjects.filter((s) => (grp.subject_ids || []).includes(s.id));
                   return (
-                    <tr key={grp.id} className="hover:bg-slate-50/80 transition">
-                      <td className="py-3.5 px-4 text-center font-bold text-slate-600">
+                    <tr key={grp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                      <td className="py-3.5 px-4 text-center font-bold text-slate-600 dark:text-slate-400">
                         {grp.display_order || 1}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-black text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/80">
+                        <span className="font-black text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md border border-emerald-200/80 dark:border-emerald-800/60">
                           {grp.group_code}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-900">
+                      <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
                         {grp.group_name}
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="flex flex-wrap gap-1.5">
                           {memberSubjects.length === 0 ? (
-                            <span className="text-amber-600 italic text-[11px]">No subjects assigned</span>
+                            <span className="text-amber-600 dark:text-amber-400 italic text-[11px]">No subjects assigned</span>
                           ) : (
                             memberSubjects.map((s) => (
                               <span
                                 key={s.id}
-                                className="inline-flex items-center space-x-1 bg-slate-100 border border-slate-200 text-slate-800 px-2 py-0.5 rounded-md text-[11px]"
+                                className="inline-flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-md text-[11px]"
                               >
-                                <span className="font-bold text-slate-900">{s.subject_code}:</span>
+                                <span className="font-bold text-slate-900 dark:text-emerald-400">{s.subject_code}:</span>
                                 <span>{s.subject_name}</span>
                               </span>
                             ))
@@ -263,18 +263,18 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
                           onClick={() => handleToggleActive(grp)}
                           className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition cursor-pointer ${
                             grp.is_active
-                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/80'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                           }`}
                         >
                           {grp.is_active ? (
                             <>
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                               <span>Active</span>
                             </>
                           ) : (
                             <>
-                              <XCircle className="w-3.5 h-3.5 text-slate-400" />
+                              <XCircle className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                               <span>Inactive</span>
                             </>
                           )}
@@ -283,14 +283,14 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
                       <td className="py-3.5 px-4 text-right space-x-1">
                         <button
                           onClick={() => openEditModal(grp)}
-                          className="p-1.5 rounded-md text-emerald-700 hover:bg-emerald-50 transition"
+                          className="p-1.5 rounded-md text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 transition cursor-pointer"
                           title="Edit Group"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(grp)}
-                          className="p-1.5 rounded-md text-rose-600 hover:bg-rose-50 transition"
+                          className="p-1.5 rounded-md text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition cursor-pointer"
                           title="Delete Group"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -308,23 +308,23 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
       {/* CREATE / EDIT MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-                <Layers className="w-5 h-5 text-emerald-700" />
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+                <Layers className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
                 <span>{editingGroup ? 'Edit Subject Group' : `Create ${targetLevel} Subject Group`}</span>
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 p-1 rounded-lg cursor-pointer"
               >
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
 
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs font-semibold flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 rounded-lg text-rose-800 dark:text-rose-300 text-xs font-semibold flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -332,53 +332,53 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
             <form onSubmit={handleSave} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Group Code *</label>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Group Code *</label>
                   <input
                     type="text"
                     value={groupCode}
                     onChange={(e) => setGroupCode(e.target.value)}
                     placeholder="e.g. SCI/AGN"
-                    className="w-full border border-slate-300 rounded-lg p-2.5 font-bold uppercase text-slate-800 focus:ring-2 focus:ring-[#176B45] focus:outline-none"
+                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2.5 font-bold uppercase text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#176B45] focus:outline-none"
                     required
                   />
-                  <span className="text-[10px] text-slate-400">Column code on reports</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">Column code on reports</span>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Display Order *</label>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Display Order *</label>
                   <input
                     type="number"
                     min={1}
                     max={99}
                     value={displayOrder}
                     onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 1)}
-                    className="w-full border border-slate-300 rounded-lg p-2.5 font-bold text-slate-800 focus:ring-2 focus:ring-[#176B45] focus:outline-none"
+                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2.5 font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#176B45] focus:outline-none"
                     required
                   />
-                  <span className="text-[10px] text-slate-400">Left-to-right report order</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">Left-to-right report order</span>
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Group Name *</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Group Name *</label>
                 <input
                   type="text"
                   value={groupName}
                   onChange={(e) => setGroupName(e.target.value)}
                   placeholder="e.g. Science & Agriculture"
-                  className="w-full border border-slate-300 rounded-lg p-2.5 font-semibold text-slate-800 focus:ring-2 focus:ring-[#176B45] focus:outline-none"
+                  className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2.5 font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#176B45] focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Included {targetLevel} Learning Areas *
                 </label>
-                <p className="text-[11px] text-slate-500 mb-2">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
                   Select which learning areas are combined into this group. If multiple are selected, their marks will be averaged automatically.
                 </p>
-                <div className="border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 bg-slate-50">
+                <div className="border border-slate-200 dark:border-slate-700/80 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 bg-slate-50 dark:bg-slate-800/60">
                   {sortSubjectsByStandardOrder<Subject>(subjects).map((sb) => {
                     const isChecked = selectedSubjectIds.includes(sb.id);
                     return (
@@ -386,19 +386,19 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
                         key={sb.id}
                         className={`flex items-center space-x-3 p-2 rounded-md transition cursor-pointer border ${
                           isChecked
-                            ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950 font-semibold'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                            ? 'bg-emerald-50/80 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-700 text-emerald-950 dark:text-emerald-200 font-semibold'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleSubjectSelection(sb.id)}
-                          className="w-4 h-4 text-[#176B45] rounded-md focus:ring-[#176B45] border-slate-300"
+                          className="w-4 h-4 text-[#176B45] rounded-md focus:ring-[#176B45] border-slate-300 dark:border-slate-600"
                         />
                         <div className="flex-1 text-xs">
-                          <span className="font-bold text-[#176B45] mr-2">{sb.subject_code}</span>
-                          <span>{sb.subject_name}</span>
+                          <span className="font-bold text-[#176B45] dark:text-emerald-400 mr-2">{sb.subject_code}</span>
+                          <span className="dark:text-slate-200">{sb.subject_name}</span>
                         </div>
                       </label>
                     );
@@ -412,24 +412,24 @@ export const SubjectGroupManagement: React.FC<SubjectGroupManagementProps> = ({
                   id="isActiveToggle"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="w-4 h-4 text-[#176B45] rounded-md focus:ring-[#176B45] border-slate-300"
+                  className="w-4 h-4 text-[#176B45] rounded-md focus:ring-[#176B45] border-slate-300 dark:border-slate-600"
                 />
-                <label htmlFor="isActiveToggle" className="font-bold text-slate-800 cursor-pointer">
+                <label htmlFor="isActiveToggle" className="font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
                   Activate this Subject Group on Reports
                 </label>
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold transition"
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg bg-[#176B45] hover:bg-[#0F5132] text-white font-bold transition shadow-xs"
+                  className="px-5 py-2 rounded-lg bg-[#176B45] hover:bg-[#0F5132] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold transition shadow-xs cursor-pointer"
                 >
                   {editingGroup ? 'Save Changes' : 'Create Subject Group'}
                 </button>

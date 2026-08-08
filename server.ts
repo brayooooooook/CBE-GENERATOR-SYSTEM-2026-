@@ -857,17 +857,117 @@ async function startServer() {
       let isAlreadyDeleted = false;
 
       // 1. Enforce Atomic DB Deletion via PostgreSQL RPC function
-      const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc('delete_teacher_atomic', {
+      let rpcRes: any = null;
+      let rpcErr: any = null;
+
+      const rpcCall = await supabaseAdmin.rpc('delete_teacher_atomic', {
         p_teacher_id: cleanTeacherId,
         p_user_id: cleanUserId,
         p_email: cleanEmail,
       });
 
+      rpcRes = rpcCall.data;
+      rpcErr = rpcCall.error;
+
       if (rpcErr) {
-        console.error('RPC delete_teacher_atomic failed:', rpcErr);
-        return res.status(500).json({
-          error: `Database atomic teacher deletion failed: ${rpcErr.message || 'RPC execution error'}`
-        });
+        if (rpcErr.code === 'PGRST202') {
+          console.warn('RPC delete_teacher_atomic not found in schema cache (PGRST202). Executing direct database fallback deletion.');
+
+          let foundTeacherId: string | null = cleanTeacherId;
+          let foundUserId: string | null = cleanUserId;
+          let foundEmail: string | null = cleanEmail;
+
+          // Lookup teacher record
+          if (cleanTeacherId) {
+            const { data: t } = await supabaseAdmin.from('teachers').select('id, user_id, email').eq('id', cleanTeacherId).maybeSingle();
+            if (t) {
+              foundTeacherId = t.id;
+              if (t.user_id) foundUserId = t.user_id;
+              if (t.email) foundEmail = t.email.toLowerCase();
+            }
+          } else if (cleanEmail) {
+            const { data: t } = await supabaseAdmin.from('teachers').select('id, user_id, email').ilike('email', cleanEmail).maybeSingle();
+            if (t) {
+              foundTeacherId = t.id;
+              if (t.user_id) foundUserId = t.user_id;
+              if (t.email) foundEmail = t.email.toLowerCase();
+            }
+          } else if (cleanUserId) {
+            const { data: t } = await supabaseAdmin.from('teachers').select('id, user_id, email').eq('user_id', cleanUserId).maybeSingle();
+            if (t) {
+              foundTeacherId = t.id;
+              if (t.user_id) foundUserId = t.user_id;
+              if (t.email) foundEmail = t.email.toLowerCase();
+            }
+          }
+
+          // Lookup user record
+          if (!foundUserId && foundTeacherId) {
+            const { data: u } = await supabaseAdmin.from('users').select('id, email').eq('teacher_id', foundTeacherId).maybeSingle();
+            if (u) {
+              foundUserId = u.id;
+              if (u.email && !foundEmail) foundEmail = u.email.toLowerCase();
+            }
+          }
+          if (!foundUserId && cleanUserId) {
+            const { data: u } = await supabaseAdmin.from('users').select('id, email').eq('id', cleanUserId).maybeSingle();
+            if (u) {
+              foundUserId = u.id;
+              if (u.email && !foundEmail) foundEmail = u.email.toLowerCase();
+            }
+          }
+          if (!foundUserId && foundEmail) {
+            const { data: u } = await supabaseAdmin.from('users').select('id, email').ilike('email', foundEmail).maybeSingle();
+            if (u) {
+              foundUserId = u.id;
+            }
+          }
+
+          if (!foundTeacherId && !foundUserId) {
+            rpcRes = {
+              success: true,
+              already_deleted: true,
+              teacher_id: cleanTeacherId,
+              user_id: cleanUserId,
+              email: cleanEmail
+            };
+          } else {
+            // Delete allocations & clear class teacher references
+            if (foundTeacherId) {
+              await supabaseAdmin.from('teacher_subjects').delete().eq('teacher_id', foundTeacherId);
+              await supabaseAdmin.from('streams').update({ class_teacher_id: null }).eq('class_teacher_id', foundTeacherId);
+              await supabaseAdmin.from('classes').update({ class_teacher_id: null }).eq('class_teacher_id', foundTeacherId);
+              await supabaseAdmin.from('teachers').delete().eq('id', foundTeacherId);
+            }
+            if (foundEmail) {
+              await supabaseAdmin.from('teachers').delete().ilike('email', foundEmail);
+            }
+
+            // Delete user records
+            if (foundUserId) {
+              await supabaseAdmin.from('users').delete().eq('id', foundUserId);
+            }
+            if (foundTeacherId) {
+              await supabaseAdmin.from('users').delete().eq('teacher_id', foundTeacherId);
+            }
+            if (foundEmail) {
+              await supabaseAdmin.from('users').delete().ilike('email', foundEmail);
+            }
+
+            rpcRes = {
+              success: true,
+              already_deleted: false,
+              teacher_id: foundTeacherId || cleanTeacherId,
+              user_id: foundUserId || cleanUserId,
+              email: foundEmail || cleanEmail
+            };
+          }
+        } else {
+          console.error('RPC delete_teacher_atomic failed:', rpcErr);
+          return res.status(500).json({
+            error: `Database atomic teacher deletion failed: ${rpcErr.message || 'RPC execution error'}`
+          });
+        }
       }
 
       if (!rpcRes || typeof rpcRes !== 'object') {
@@ -887,25 +987,35 @@ async function startServer() {
       let authDeleteSuccess = false;
       let authDeleteErrorMsg: string | null = null;
 
-      if (resolvedUserId) {
-        try {
-          const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(resolvedUserId);
-          if (!authErr) {
-            authDeleteSuccess = true;
-          } else if (authErr.message?.toLowerCase().includes('not found') || authErr.status === 404) {
-            authDeleteSuccess = true; // Idempotent: User already removed from Auth
-          } else {
-            authDeleteErrorMsg = authErr.message;
+      const candidateAuthUuids = new Set<string>();
+      if (resolvedUserId && isUUID(resolvedUserId)) candidateAuthUuids.add(resolvedUserId);
+      if (cleanUserId && isUUID(cleanUserId)) candidateAuthUuids.add(cleanUserId);
+      if (resolvedTeacherId && isUUID(resolvedTeacherId)) candidateAuthUuids.add(resolvedTeacherId);
+      if (cleanTeacherId && isUUID(cleanTeacherId)) candidateAuthUuids.add(cleanTeacherId);
+
+      const targetEmail = (resolvedEmail || cleanEmail || '').toLowerCase().trim();
+
+      if (candidateAuthUuids.size > 0) {
+        for (const authUuid of candidateAuthUuids) {
+          try {
+            const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(authUuid);
+            if (!authErr) {
+              authDeleteSuccess = true;
+            } else if (authErr.message?.toLowerCase().includes('not found') || authErr.status === 404) {
+              authDeleteSuccess = true; // Idempotent: User already removed from Auth
+            } else {
+              authDeleteErrorMsg = authErr.message;
+            }
+          } catch (err: any) {
+            authDeleteErrorMsg = err?.message || 'Auth deletion exception';
           }
-        } catch (err: any) {
-          authDeleteErrorMsg = err?.message || 'Auth deletion exception';
         }
       }
 
-      if (!authDeleteSuccess && resolvedEmail) {
+      if (!authDeleteSuccess && targetEmail) {
         try {
           const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
-          const matchAuth = listData?.users?.find(u => u.email?.toLowerCase() === resolvedEmail.toLowerCase());
+          const matchAuth = listData?.users?.find(u => u.email?.toLowerCase() === targetEmail);
           if (matchAuth) {
             const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(matchAuth.id);
             if (!authErr || authErr.message?.toLowerCase().includes('not found') || authErr.status === 404) {
@@ -921,18 +1031,28 @@ async function startServer() {
         }
       }
 
-      if (!resolvedUserId && !resolvedEmail) {
+      if (candidateAuthUuids.size === 0 && !targetEmail) {
         authDeleteSuccess = true;
       }
 
       if (!authDeleteSuccess && authDeleteErrorMsg) {
+        console.error(`Teacher DB deletion succeeded, but Supabase Auth account deletion failed for teacher_id: ${resolvedTeacherId || cleanTeacherId}, user_id: ${resolvedUserId || cleanUserId}, email: ${targetEmail || cleanEmail}. Error: ${authDeleteErrorMsg}`);
         return res.status(500).json({
-          error: `Database records cleared, but failed to delete Supabase Auth account: ${authDeleteErrorMsg}`
+          error: `Database records cleared, but failed to delete Supabase Auth account: ${authDeleteErrorMsg}`,
+          database_deleted: true,
+          auth_deleted: false,
+          cleanup_required: true,
+          teacher_id: resolvedTeacherId || cleanTeacherId,
+          user_id: resolvedUserId || cleanUserId,
+          email: targetEmail || cleanEmail
         });
       }
 
       return res.status(200).json({
         success: true,
+        database_deleted: true,
+        auth_deleted: true,
+        already_deleted: isAlreadyDeleted,
         message: isAlreadyDeleted
           ? 'Teacher account was already deleted or does not exist.'
           : 'Teacher and associated records deleted successfully.'

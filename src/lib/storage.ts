@@ -554,12 +554,12 @@ export async function syncFromSupabase(): Promise<boolean> {
     }
 
     // 2. Fetch Classes & Streams first so student resolution works
-    const { data: classData } = await client.from('classes').select('*');
-    const { data: streamData } = await client.from('streams').select('*');
+    const { data: classData, error: classError } = await client.from('classes').select('*');
+    const { data: streamData, error: streamError } = await client.from('streams').select('*');
 
     let currentClasses = getStorage<ClassStream[]>(KEYS.CLASSES, initialClasses);
-    if (classData && classData.length > 0) {
-      const existing = getStorage<ClassStream[]>(KEYS.CLASSES, initialClasses);
+    if (!classError && classData) {
+      const existing = getStorage<ClassStream[]>(KEYS.CLASSES, []);
       const merged: ClassStream[] = [];
 
       classData.forEach((c: any) => {
@@ -568,8 +568,7 @@ export async function syncFromSupabase(): Promise<boolean> {
           cStreams.forEach((st: any) => {
             const cleanName = c.class_name;
             const eduLevel = c.education_level || getEducationLevelForGrade(cleanName);
-            const match = existing.find((e) => e.id === st.id || (e.class_name.toLowerCase() === cleanName.toLowerCase() && e.stream.toLowerCase() === st.stream_name.toLowerCase())) ||
-                          initialClasses.find((i) => i.id === st.id || (i.class_name.toLowerCase() === cleanName.toLowerCase() && i.stream.toLowerCase() === st.stream_name.toLowerCase()));
+            const match = existing.find((e) => e.id === st.id || (e.class_name.toLowerCase() === cleanName.toLowerCase() && e.stream.toLowerCase() === st.stream_name.toLowerCase()));
 
             merged.push(sanitizeClass({
               id: st.id || c.id,
@@ -585,8 +584,7 @@ export async function syncFromSupabase(): Promise<boolean> {
         } else {
           const clean = sanitizeClass(c);
           const match = existing.find((e) => e.id === clean.id) ||
-                        existing.find((e) => e.class_name.toLowerCase() === clean.class_name.toLowerCase()) ||
-                        initialClasses.find((i) => i.id === clean.id);
+                        existing.find((e) => e.class_name.toLowerCase() === clean.class_name.toLowerCase());
           if (match) {
             if (!clean.stream && match.stream) clean.stream = match.stream;
             if ((!clean.allocated_subject_ids || clean.allocated_subject_ids.length === 0) && match.allocated_subject_ids) {
@@ -600,20 +598,10 @@ export async function syncFromSupabase(): Promise<boolean> {
         }
       });
 
-      // Preserve any registered initial/seed classes that are not in merged
-      initialClasses.forEach((ic) => {
-        const alreadyExists = merged.some(
-          (m) => m.id === ic.id || (m.class_name.toLowerCase() === ic.class_name.toLowerCase() && m.stream.toLowerCase() === ic.stream.toLowerCase())
-        );
-        if (!alreadyExists) {
-          const clean = sanitizeClass(ic);
-          merged.push(clean);
-          syncClassToSupabase(clean);
-        }
-      });
-
       setStorage(KEYS.CLASSES, merged);
       currentClasses = merged;
+    } else if (classError) {
+      console.warn('Error fetching classes from Supabase:', classError);
     }
 
     // 3. Fetch Students from public.students
@@ -651,13 +639,13 @@ export async function syncFromSupabase(): Promise<boolean> {
     }
 
     // 4. Fetch Teachers & Teacher Allocations
-    const { data: subjectData } = await client.from('subjects').select('*');
-    const { data: teacherData } = await client.from('teachers').select('*');
-    const { data: teacherSubjectsData } = await client.from('teacher_subjects').select('*');
+    const { data: subjectData, error: subjectError } = await client.from('subjects').select('*');
+    const { data: teacherData, error: teacherError } = await client.from('teachers').select('*');
+    const { data: teacherSubjectsData, error: teacherSubjectsError } = await client.from('teacher_subjects').select('*');
 
-    if (teacherData && teacherData.length > 0) {
-      const currentClasses = getStorage<ClassStream[]>(KEYS.CLASSES, initialClasses);
-      const existingTeachers = getStorage<Teacher[]>(KEYS.TEACHERS, initialTeachers);
+    if (!teacherError && teacherData) {
+      const currentClasses = getStorage<ClassStream[]>(KEYS.CLASSES, []);
+      const existingTeachers = getStorage<Teacher[]>(KEYS.TEACHERS, []);
       const { ids: delIds, emails: delEmails } = getDeletedTeacherIdentifiers();
 
       const cleanTeachers = teacherData
@@ -717,10 +705,12 @@ export async function syncFromSupabase(): Promise<boolean> {
 
       setStorage(KEYS.TEACHERS, uniqueCleanTeachers);
       api.deduplicateTeachersAndUsers();
+    } else if (teacherError) {
+      console.warn('Error fetching teachers from Supabase:', teacherError);
     }
 
     // 5. Fetch Subjects & Auto-Migrate Old Codes
-    if (subjectData && subjectData.length > 0) {
+    if (!subjectError && subjectData) {
       const sanitized = subjectData.map((s: any) => {
         const clean = sanitizeSubject(s);
         const initSb = initialSubjects.find(isb => isb.subject_code === clean.subject_code || isb.subject_name === clean.subject_name || isb.id === clean.id);
@@ -747,18 +737,24 @@ export async function syncFromSupabase(): Promise<boolean> {
           }
         }
       });
+    } else if (subjectError) {
+      console.warn('Error fetching subjects from Supabase:', subjectError);
     }
 
     // 6. Fetch Examinations
-    const { data: examData } = await client.from('examinations').select('*');
-    if (examData && examData.length > 0) {
+    const { data: examData, error: examError } = await client.from('examinations').select('*');
+    if (!examError && examData) {
       setStorage(KEYS.EXAMS, examData);
+    } else if (examError) {
+      console.warn('Error fetching examinations from Supabase:', examError);
     }
 
     // 7. Fetch Marks
-    const { data: markData } = await client.from('marks').select('*');
-    if (markData && markData.length > 0) {
+    const { data: markData, error: markError } = await client.from('marks').select('*');
+    if (!markError && markData) {
       setStorage(KEYS.MARKS, markData);
+    } else if (markError) {
+      console.warn('Error fetching marks from Supabase:', markError);
     }
 
     return true;
