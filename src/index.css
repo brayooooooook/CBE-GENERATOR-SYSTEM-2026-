@@ -1,0 +1,283 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --brand-navy: #075E42;
+    --brand-blue: #087F5B;
+    --page-bg: #F6F8FA;
+    --card-bg: #FFFFFF;
+    --text-main: #1F2937;
+    --text-muted: #667085;
+    --border-color: #D9E0E7;
+    --brand-green: #176B45;
+    --brand-green-glow: rgba(23, 107, 69, 0.22);
+  }
+
+  .dark {
+    --brand-navy: #087F5B;
+    --brand-blue: #0A9D71;
+    --page-bg: #0B0F17;
+    --card-bg: #151D2A;
+    --text-main: #F1F5F9;
+    --text-muted: #94A3B8;
+    --border-color: #27354A;
+    --brand-green: #10B981;
+    --brand-green-glow: rgba(16, 185, 129, 0.25);
+  }
+
+  body {
+    background-color: var(--page-bg);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+}
+
+/* ==========================================
+   GLOBAL GREEN THEME FOCUS STYLING
+   ========================================== */
+
+/* 1. Universal focus-visible outline replacement (replaces browser blue focus outline) */
+*:focus-visible {
+  outline: 2px solid #176B45 !important;
+  outline-offset: 2px !important;
+}
+
+/* 2. Form Controls: Inputs, Selects, Textareas (excluding disabled, error, warning states) */
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="range"]):not(:disabled):not([aria-invalid="true"]):not(.border-red-500):not(.border-red-600):not(.border-rose-500):not(.border-rose-600):not(.ring-rose-500):not(.ring-red-500):not(.border-amber-500):not(.border-amber-400):focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="range"]):not(:disabled):not([aria-invalid="true"]):not(.border-red-500):not(.border-red-600):not(.border-rose-500):not(.border-rose-600):not(.ring-rose-500):not(.ring-red-500):not(.border-amber-500):not(.border-amber-400):focus-visible,
+select:not(:disabled):not([aria-invalid="true"]):not(.border-red-500):not(.border-red-600):not(.border-rose-500):not(.border-rose-600):not(.ring-rose-500):not(.ring-red-500):not(.border-amber-500):not(.border-amber-400):focus,
+select:not(:disabled):not([aria-invalid="true"]):not(.border-red-500):not(.border-red-600):not(.border-rose-500):not(.border-rose-600):not(.ring-rose-500):not(.ring-red-500):not(.border-amber-500):not(.border-amber-400):focus-visible,
+textarea:not(:disabled):not([aria-invalid="true"]):not(.border-red-500):not(.border-red-600):not(.border-rose-500):not(.border-rose-600):not(.ring-rose-500):not(.ring-red-500):not(.border-amber-500):not(.border-amber-400):focus,
+textarea:not(:disabled):not([aria-invalid="true"]):not(.border-red-500):not(.border-red-600):not(.border-rose-500):not(.border-rose-600):not(.ring-rose-500):not(.ring-red-500):not(.border-amber-500):not(.border-amber-400):focus-visible {
+  border-color: #176B45 !important;
+  box-shadow: 0 0 0 3px rgba(23, 107, 69, 0.22) !important;
+  outline: none !important;
+}
+
+/* 3. Checkboxes and Radio buttons styling */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #176B45 !important;
+}
+
+input[type="checkbox"]:not(:disabled):focus,
+input[type="checkbox"]:not(:disabled):focus-visible,
+input[type="radio"]:not(:disabled):focus,
+input[type="radio"]:not(:disabled):focus-visible {
+  accent-color: #176B45 !important;
+  outline: 2px solid #176B45 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(23, 107, 69, 0.22) !important;
+}
+
+/* 4. Interactive elements (buttons, tabs, links, clickable controls) focus styling */
+button:not(:disabled):focus-visible,
+button:not(:disabled):focus,
+[role="button"]:not(:disabled):focus-visible,
+[role="button"]:not(:disabled):focus,
+[role="tab"]:not(:disabled):focus-visible,
+[role="tab"]:not(:disabled):focus,
+a:focus-visible,
+summary:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid #176B45 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(23, 107, 69, 0.22) !important;
+}
+
+/* 5. Disabled controls safety */
+input:disabled,
+select:disabled,
+textarea:disabled,
+button:disabled,
+[disabled] {
+  outline: none !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+/* 6. Preservation of Error & Warning focus states */
+input:not(:disabled).border-red-500:focus,
+input:not(:disabled).border-red-600:focus,
+input:not(:disabled).border-rose-500:focus,
+input:not(:disabled).border-rose-600:focus,
+input:not(:disabled).ring-rose-500:focus,
+input:not(:disabled).ring-red-500:focus,
+input:not(:disabled)[aria-invalid="true"]:focus,
+select:not(:disabled).border-red-500:focus,
+select:not(:disabled).border-red-600:focus,
+select:not(:disabled).border-rose-500:focus,
+select:not(:disabled).border-rose-600:focus,
+select:not(:disabled).ring-rose-500:focus,
+select:not(:disabled).ring-red-500:focus,
+select:not(:disabled)[aria-invalid="true"]:focus,
+textarea:not(:disabled).border-red-500:focus,
+textarea:not(:disabled).border-red-600:focus,
+textarea:not(:disabled).border-rose-500:focus,
+textarea:not(:disabled).border-rose-600:focus,
+textarea:not(:disabled).ring-rose-500:focus,
+textarea:not(:disabled).ring-red-500:focus,
+textarea:not(:disabled)[aria-invalid="true"]:focus {
+  border-color: #e11d48 !important; /* rose-600 */
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.22) !important;
+  outline: none !important;
+}
+
+input:not(:disabled).border-amber-500:focus,
+input:not(:disabled).border-amber-400:focus,
+select:not(:disabled).border-amber-500:focus,
+select:not(:disabled).border-amber-400:focus,
+textarea:not(:disabled).border-amber-500:focus,
+textarea:not(:disabled).border-amber-400:focus {
+  border-color: #f59e0b !important; /* amber-500 */
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22) !important;
+  outline: none !important;
+}
+
+/* Global design tokens and standard components for CBE Assessment System */
+.bg-page {
+  background-color: #F6F8FA;
+}
+
+.bg-navy-brand {
+  background-color: #075E42;
+}
+
+.bg-navy-secondary {
+  background-color: #087F5B;
+}
+
+.text-navy-brand {
+  color: #075E42;
+}
+
+.text-navy-secondary {
+  color: #087F5B;
+}
+
+.border-navy-brand {
+  border-color: #075E42;
+}
+
+.border-custom-light {
+  border-color: #D9E0E7;
+}
+
+.text-main-dark {
+  color: #1F2937;
+}
+
+.text-secondary-muted {
+  color: #667085;
+}
+
+/* Restrained component styles */
+.cbe-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem; /* 12px */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.cbe-input {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.cbe-input:focus {
+  outline: none;
+  border-color: #176B45;
+  box-shadow: 0 0 0 3px rgba(23, 107, 69, 0.22);
+}
+
+.cbe-btn-primary {
+  background-color: #075E42;
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease-in-out;
+}
+.cbe-btn-primary:hover {
+  background-color: #054531;
+}
+
+.cbe-btn-secondary {
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+.cbe-btn-secondary:hover {
+  background-color: var(--page-bg);
+  border-color: var(--border-color);
+}
+
+.cbe-btn-success {
+  background-color: #166534;
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: background-color 0.15s ease-in-out;
+}
+.cbe-btn-success:hover {
+  background-color: #14532D;
+}
+
+.cbe-btn-danger {
+  background-color: #991B1B;
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: background-color 0.15s ease-in-out;
+}
+.cbe-btn-danger:hover {
+  background-color: #7F1D1D;
+}
+
+.cbe-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--card-bg);
+}
+
+.cbe-table th {
+  background-color: var(--page-bg);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cbe-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+
+.cbe-table tr:hover {
+  background-color: var(--page-bg);
+}
+
+
