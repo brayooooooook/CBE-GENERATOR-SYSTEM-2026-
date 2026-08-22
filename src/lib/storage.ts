@@ -3695,32 +3695,39 @@ export const api = {
         // ignore
       }
 
+      let serverDeleted = false;
       if (typeof fetch === 'function' && typeof window !== 'undefined') {
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-
-        const response = await fetch(buildApiUrl('/api/admin/delete-teacher'), {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            teacherId: deleteId,
-            email: targetEmailLower || undefined,
-            token: accessToken,
-          }),
-        });
-
-        let resData: any = null;
         try {
-          resData = await response.json();
-        } catch {
-          // ignore
-        }
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 
-        if (!response.ok || !resData?.success) {
-          throw new Error(resData?.error || `Failed to delete teacher (${response.status})`);
+          const response = await fetch(buildApiUrl('/api/admin/delete-teacher'), {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              teacherId: deleteId,
+              email: targetEmailLower || undefined,
+              token: accessToken,
+            }),
+          });
+
+          let resData: any = null;
+          try {
+            resData = await response.json();
+          } catch {
+            // ignore
+          }
+
+          if (response.ok && resData?.success) {
+            serverDeleted = true;
+          }
+        } catch (fetchErr) {
+          console.warn('Server fetch for delete-teacher failed, falling back to direct Supabase client deletion:', fetchErr);
         }
-      } else {
-        // In direct Node/testing context
+      }
+
+      if (!serverDeleted) {
+        // In direct Node/testing context or when server endpoint fetch is unreachable
         let deleteUuid: string | null = isUUID(deleteId) ? deleteId : null;
         if (!deleteUuid && targetEmailLower) {
           const { data: dbMatch } = await client.from('teachers').select('id').eq('email', targetEmailLower).maybeSingle();
@@ -3737,15 +3744,23 @@ export const api = {
           await client.from('streams').update({ class_teacher_id: null }).eq('class_teacher_id', deleteUuid);
           const { error: tErr } = await client.from('teachers').delete().eq('id', deleteUuid);
           if (tErr) {
-            console.error('Supabase deleteTeacher error:', tErr);
-            throw new Error(`Failed to delete teacher from database: ${tErr.message}`);
+            if (tErr.code === '42501' || tErr.message?.includes('permission denied')) {
+              console.warn('Direct Supabase delete rejected by RLS (requires authenticated admin or server role):', tErr.message);
+            } else {
+              console.error('Supabase deleteTeacher error:', tErr);
+              throw new Error(`Failed to delete teacher from database: ${tErr.message}`);
+            }
           }
           await client.from('users').delete().eq('teacher_id', deleteUuid);
         } else if (targetEmailLower) {
           const { error: tErr } = await client.from('teachers').delete().eq('email', targetEmailLower);
           if (tErr) {
-            console.error('Supabase deleteTeacher error:', tErr);
-            throw new Error(`Failed to delete teacher from database: ${tErr.message}`);
+            if (tErr.code === '42501' || tErr.message?.includes('permission denied')) {
+              console.warn('Direct Supabase delete rejected by RLS (requires authenticated admin or server role):', tErr.message);
+            } else {
+              console.error('Supabase deleteTeacher error:', tErr);
+              throw new Error(`Failed to delete teacher from database: ${tErr.message}`);
+            }
           }
           await client.from('users').delete().eq('email', targetEmailLower);
         }

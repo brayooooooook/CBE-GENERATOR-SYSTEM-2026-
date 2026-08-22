@@ -1154,7 +1154,20 @@ export const authService = {
         return { success: false, error: errMsg, blocked: data?.blocked, details: data?.details };
       } catch (fetchErr: any) {
         console.error('API call to /api/admin/delete-learner failed:', fetchErr);
-        return { success: false, error: `Failed to delete learner via server: ${fetchErr?.message || 'Network error.'}` };
+        if (client) {
+          try {
+            console.warn('Attempting direct Supabase deletion for learner:', studentId);
+            await client.from('marks').delete().eq('student_id', studentId);
+            const { error: sErr } = await client.from('students').delete().eq('id', studentId);
+            await client.from('users').delete().eq('student_id', studentId);
+            if (!sErr) {
+              return { success: true, error: null };
+            }
+          } catch (dbErr) {
+            console.error('Direct learner deletion fallback failed:', dbErr);
+          }
+        }
+        return { success: false, error: `Could not reach server to delete learner (${fetchErr?.message || 'Failed to fetch'}). Please check your internet connection.` };
       }
     } catch (err: any) {
       console.error('Exception in adminDeleteLearner:', err);
@@ -1242,7 +1255,43 @@ export const authService = {
         return { success: false, error: errMsg };
       } catch (fetchErr: any) {
         console.error('API call to /api/admin/delete-teacher failed:', fetchErr);
-        return { success: false, error: `Failed to delete teacher via server: ${fetchErr?.message || 'Network error.'}` };
+        
+        // Direct Supabase database fallback if server fetch is unreachable (e.g. APK offline or remote server disconnect)
+        if (client) {
+          try {
+            console.warn('Attempting direct Supabase deletion for teacher:', teacherId);
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teacherId);
+            
+            await client.from('streams').update({ class_teacher_id: null }).eq('class_teacher_id', teacherId);
+            await client.from('teacher_subjects').delete().eq('teacher_id', teacherId);
+            
+            let deleteErr = null;
+            if (isUUID) {
+              const { error } = await client.from('teachers').delete().eq('id', teacherId);
+              deleteErr = error;
+            }
+            if (email && !deleteErr) {
+              const { error } = await client.from('teachers').delete().ilike('email', email.trim());
+              deleteErr = error;
+            }
+
+            if (isUUID) {
+              await client.from('users').delete().eq('teacher_id', teacherId);
+            }
+            if (email) {
+              await client.from('users').delete().ilike('email', email.trim());
+            }
+
+            if (!deleteErr) {
+              await api.deleteTeacher(teacherId, { alreadyDeletedOnServer: true });
+              return { success: true, error: null };
+            }
+          } catch (dbErr: any) {
+            console.error('Direct Supabase deletion fallback error:', dbErr);
+          }
+        }
+
+        return { success: false, error: `Could not reach server to delete teacher (${fetchErr?.message || 'Failed to fetch'}). Please check network or backend connection.` };
       }
     } catch (err: any) {
       console.error('Exception in adminDeleteTeacher:', err);
