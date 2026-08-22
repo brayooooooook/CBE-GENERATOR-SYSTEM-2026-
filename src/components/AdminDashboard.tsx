@@ -42,6 +42,8 @@ import { ChartWrapper } from './ChartWrapper';
 import { useAcademicSession } from '../contexts/AcademicSessionContext';
 import { formatGreeting } from '../utils/greetingUtils';
 import { saveFile } from '../utils/fileDownloader';
+import { getUpcomingTermReminder } from '../utils/termReminderUtils';
+import { AcademicTermReminderBanner } from './AcademicTermReminderBanner';
 
 interface AdminDashboardProps {
   userName?: string;
@@ -73,6 +75,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const { viewingYear: activeAcademicYear, viewingTerm: activeTerm } = useAcademicSession();
 
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [reminderDismissed, setReminderDismissed] = useState(false);
+
+  const allSchoolTerms = api.getSchoolTerms();
+  const termReminder = !reminderDismissed
+    ? getUpcomingTermReminder({
+        schoolTerms: allSchoolTerms,
+        activeTerm,
+        activeAcademicYear,
+        checkDismissed: true,
+      })
+    : null;
 
   // Level & Grade filter states
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<string>('all');
@@ -372,6 +385,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Academic Term Transition Reminder Banner */}
+      {termReminder && (
+        <AcademicTermReminderBanner
+          reminder={termReminder}
+          onNavigateToSession={() => onNavigate('academic-session')}
+          onDismiss={() => setReminderDismissed(true)}
+        />
       )}
 
       {/* --- CURRENT ACADEMIC SESSION CARD --- */}

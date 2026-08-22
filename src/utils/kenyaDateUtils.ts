@@ -29,6 +29,16 @@ export function getKenyaCalendarToday(customDate?: Date | string | number): stri
 }
 
 /**
+ * Returns tomorrow's calendar date in Africa/Nairobi as 'YYYY-MM-DD'.
+ */
+export function getKenyaCalendarTomorrow(customDate?: Date | string | number): string {
+  const todayStr = getKenyaCalendarToday(customDate);
+  const [y, m, d] = todayStr.split('-').map(Number);
+  const nextDay = new Date(Date.UTC(y, m - 1, d + 1, 12, 0, 0));
+  return getKenyaCalendarToday(nextDay);
+}
+
+/**
  * Returns the current local time in Africa/Nairobi as 'HH:MM:SS'.
  */
 export function getKenyaTime(customDate?: Date | string | number): string {

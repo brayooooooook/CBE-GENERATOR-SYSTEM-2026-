@@ -26,6 +26,8 @@ import {
 import { api, generateUUID } from '../lib/storage';
 import { getTermStatusFromDates } from '../utils/termStatusUtils';
 import { getKenyaCalendarToday, formatKenyaDate } from '../utils/kenyaDateUtils';
+import { getUpcomingTermReminder } from '../utils/termReminderUtils';
+import { AcademicTermReminderBanner } from './AcademicTermReminderBanner';
 
 interface AcademicSessionManagementProps {
   userRole?: Role;
@@ -73,6 +75,16 @@ export const AcademicSessionManagement: React.FC<AcademicSessionManagementProps>
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [reminderDismissed, setReminderDismissed] = useState(false);
+
+  const termReminder = !reminderDismissed
+    ? getUpcomingTermReminder({
+        schoolTerms: terms,
+        activeTerm,
+        activeAcademicYear: activeYear,
+        checkDismissed: true,
+      })
+    : null;
 
   const refreshData = () => {
     const updatedYears = api.getAcademicYears();
@@ -615,6 +627,15 @@ export const AcademicSessionManagement: React.FC<AcademicSessionManagementProps>
           </div>
         </div>
       </div>
+
+      {/* Academic Term Transition Reminder Banner */}
+      {termReminder && (
+        <AcademicTermReminderBanner
+          reminder={termReminder}
+          onNavigateToSession={() => setActiveTab('terms')}
+          onDismiss={() => setReminderDismissed(true)}
+        />
+      )}
 
       {/* Navigation Tabs */}
       <div className="flex flex-wrap items-center justify-between border-b border-slate-200 dark:border-slate-800 gap-2">
