@@ -1,6 +1,8 @@
 name: Build Android APK
 
 on:
+  push:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -36,11 +38,19 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Validate and setup Gradle Wrapper
+        run: |
+          mkdir -p android/gradle/wrapper
+          if ! unzip -t android/gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+            echo "Gradle wrapper JAR is corrupt or missing. Downloading clean Gradle 8.14.3 wrapper JAR..."
+            curl -sSL "https://raw.githubusercontent.com/gradle/gradle/v8.14.3/gradle/wrapper/gradle-wrapper.jar" -o android/gradle/wrapper/gradle-wrapper.jar
+          fi
+          chmod +x android/gradlew
+
       - name: Build debug APK
         working-directory: android
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
