@@ -17,6 +17,14 @@ import { User } from '../types';
 
 export type StatusCategory = 'checking' | 'interrupted' | 'offline' | 'connected' | 'auth_required';
 
+interface StatusCopy {
+  shortLabel: string;
+  title: string;
+  description: string;
+  summaryLabel?: string;
+  summaryValue?: string;
+}
+
 interface ConnectionStatusIndicatorProps {
   connectionStatus: ConnectionStatus;
   dbStatus?: {
@@ -40,6 +48,11 @@ export const ConnectionStatusIndicator: React.FC<ConnectionStatusIndicatorProps>
   const [isOpen, setIsOpen] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  const role = currentUser?.role;
+  const isAdmin = role === 'admin';
+  const isLearner = role === 'learner';
+  const isTeacher = role === 'class_teacher' || role === 'subject_teacher';
 
   // Determine normalized status category
   const getStatusCategory = (): StatusCategory => {
@@ -93,15 +106,141 @@ export const ConnectionStatusIndicator: React.FC<ConnectionStatusIndicatorProps>
     }
   };
 
-  // Config mapping for visual styles & human-friendly labels
+  // Role-tailored copy resolution
+  const getRoleCopy = (category: StatusCategory): StatusCopy => {
+    if (isAdmin) {
+      switch (category) {
+        case 'connected':
+          return {
+            shortLabel: 'Connected',
+            title: 'System Connected',
+            description: 'Connected to the school database.',
+          };
+        case 'checking':
+          return {
+            shortLabel: 'Connecting…',
+            title: 'Connecting to System',
+            description: 'Verifying connection and syncing records with the school database.',
+          };
+        case 'interrupted':
+          return {
+            shortLabel: 'Reconnecting',
+            title: 'Connection Interrupted',
+            description: 'Temporary connection delay. Attempting to reconnect…',
+          };
+        case 'offline':
+          return {
+            shortLabel: 'Offline',
+            title: 'Offline Mode',
+            description: 'No network connection detected. Please check your network connection.',
+          };
+        case 'auth_required':
+          return {
+            shortLabel: 'Sign-in Required',
+            title: 'Sign-in Required',
+            description: 'Your sign-in session requires verification to access school data.',
+          };
+      }
+    }
+
+    if (isLearner) {
+      switch (category) {
+        case 'connected':
+          return {
+            shortLabel: 'Connected',
+            title: "You're Connected",
+            description: "You're ready to continue.",
+            summaryLabel: 'Status',
+            summaryValue: 'Online & Ready',
+          };
+        case 'checking':
+          return {
+            shortLabel: 'Checking…',
+            title: 'Checking Connection…',
+            description: 'Please wait while we connect you to the school portal.',
+            summaryLabel: 'Status',
+            summaryValue: 'Checking connection…',
+          };
+        case 'interrupted':
+          return {
+            shortLabel: 'Reconnecting',
+            title: 'Connection Interrupted',
+            description: "We're trying to reconnect. Please check your internet connection.",
+            summaryLabel: 'Status',
+            summaryValue: 'Attempting to reconnect',
+          };
+        case 'offline':
+          return {
+            shortLabel: 'Offline',
+            title: 'No Internet Connection',
+            description: 'Please check your internet connection and try again.',
+            summaryLabel: 'Status',
+            summaryValue: 'Offline',
+          };
+        case 'auth_required':
+          return {
+            shortLabel: 'Sign-in Required',
+            title: 'Sign-in Required',
+            description: 'Please sign in to view your classes and progress.',
+            summaryLabel: 'Status',
+            summaryValue: 'Sign-in required',
+          };
+      }
+    }
+
+    // Default for Teachers (class_teacher, subject_teacher) and general authenticated staff
+    switch (category) {
+      case 'connected':
+        return {
+          shortLabel: 'Connected',
+          title: "You're Connected",
+          description: 'Everything is ready. Your work and assessments are in sync.',
+          summaryLabel: 'Status',
+          summaryValue: 'Ready & In Sync',
+        };
+      case 'checking':
+        return {
+          shortLabel: 'Checking…',
+          title: 'Checking Connection…',
+          description: 'Please wait while we check the school system.',
+          summaryLabel: 'Status',
+          summaryValue: 'Checking connection…',
+        };
+      case 'interrupted':
+        return {
+          shortLabel: 'Reconnecting',
+          title: 'Connection Interrupted',
+          description: "We're trying to reconnect. Please check your internet connection.",
+          summaryLabel: 'Status',
+          summaryValue: 'Attempting to reconnect',
+        };
+      case 'offline':
+        return {
+          shortLabel: 'Offline',
+          title: "You're Offline",
+          description: 'Please check your internet connection and try again.',
+          summaryLabel: 'Status',
+          summaryValue: 'Offline',
+        };
+      case 'auth_required':
+        return {
+          shortLabel: 'Sign-in Required',
+          title: 'Sign-in Required',
+          description: 'Please sign in to access your classes and assessments.',
+          summaryLabel: 'Status',
+          summaryValue: 'Sign-in required',
+        };
+    }
+  };
+
+  const copy = getRoleCopy(statusCategory);
+
+  // Config mapping for visual styles
   const config = {
     connected: {
       dotBg: 'bg-emerald-400',
       pillBg: 'bg-emerald-950/40 hover:bg-emerald-950/60 border-emerald-500/30 text-emerald-100',
       icon: CheckCircle2,
-      shortLabel: 'Connected',
-      title: 'System Connected',
-      description: 'Connected to the school database.',
       badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     },
     checking: {
@@ -109,36 +248,24 @@ export const ConnectionStatusIndicator: React.FC<ConnectionStatusIndicatorProps>
       pillBg: 'bg-amber-950/40 hover:bg-amber-950/60 border-amber-500/30 text-amber-100',
       icon: RefreshCw,
       iconClass: 'animate-spin',
-      shortLabel: 'Connecting…',
-      title: 'Connecting to System',
-      description: 'Verifying connection and syncing records with the school database.',
       badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     },
     interrupted: {
       dotBg: 'bg-amber-400',
       pillBg: 'bg-amber-950/50 hover:bg-amber-950/70 border-amber-500/40 text-amber-100',
       icon: AlertTriangle,
-      shortLabel: 'Reconnecting',
-      title: 'Connection Interrupted',
-      description: 'Temporary connection delay. Attempting to reconnect…',
       badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     },
     offline: {
       dotBg: 'bg-rose-400',
       pillBg: 'bg-rose-950/60 hover:bg-rose-950/80 border-rose-500/40 text-rose-100',
       icon: WifiOff,
-      shortLabel: 'Offline',
-      title: 'Offline Mode',
-      description: 'No network connection detected. Please check your network connection.',
       badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
     },
     auth_required: {
       dotBg: 'bg-blue-400',
       pillBg: 'bg-blue-950/40 hover:bg-blue-950/60 border-blue-500/30 text-blue-100',
       icon: Shield,
-      shortLabel: 'Sign-in Required',
-      title: 'Sign-in Required',
-      description: 'Your sign-in session requires verification to access school data.',
       badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
     },
   }[statusCategory];
@@ -152,14 +279,14 @@ export const ConnectionStatusIndicator: React.FC<ConnectionStatusIndicatorProps>
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-emerald-400/40 ${config.pillBg}`}
-        title={`Status: ${config.title}. Click for details.`}
+        title={`Status: ${copy.title}. Click for details.`}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         role="status"
         aria-live="polite"
       >
         <span className={`w-2 h-2 rounded-full ${config.dotBg} shrink-0`} />
-        <span className="hidden sm:inline font-medium">{config.shortLabel}</span>
+        <span className="hidden sm:inline font-medium">{copy.shortLabel}</span>
         <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -177,8 +304,8 @@ export const ConnectionStatusIndicator: React.FC<ConnectionStatusIndicatorProps>
                 <Icon className={`w-4 h-4 ${'iconClass' in config ? config.iconClass : ''}`} />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-white leading-tight">{config.title}</h4>
-                <span className="text-[10px] text-slate-400">System Status</span>
+                <h4 className="text-xs font-bold text-white leading-tight">{copy.title}</h4>
+                <span className="text-[10px] text-slate-400">Connection Status</span>
               </div>
             </div>
             <button
@@ -191,44 +318,67 @@ export const ConnectionStatusIndicator: React.FC<ConnectionStatusIndicatorProps>
           </div>
 
           {/* Calm Human-Readable Explanation */}
-          <p className="text-xs text-slate-300 leading-relaxed">{config.description}</p>
+          <p className="text-xs text-slate-300 leading-relaxed">{copy.description}</p>
 
-          {/* Connection Checks Summary */}
-          <div className="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400 text-[11px]">Network</span>
-              <span className="inline-flex items-center gap-1 font-semibold text-[11px]">
-                {connectionStatus === 'offline' ? (
-                  <span className="text-rose-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Offline
-                  </span>
-                ) : (
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Online
-                  </span>
-                )}
-              </span>
-            </div>
+          {/* Status Breakdown Section: Technical 2-row for Admin, Simplified 1-row for Teacher/Learner */}
+          {isAdmin ? (
+            <div className="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-[11px]">Network</span>
+                <span className="inline-flex items-center gap-1 font-semibold text-[11px]">
+                  {connectionStatus === 'offline' ? (
+                    <span className="text-rose-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Offline
+                    </span>
+                  ) : (
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Online
+                    </span>
+                  )}
+                </span>
+              </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400 text-[11px]">School Database</span>
-              <span className="inline-flex items-center gap-1 font-semibold text-[11px]">
-                {dbStatus?.checking ? (
-                  <span className="text-amber-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" /> Checking…
-                  </span>
-                ) : dbStatus?.success !== false ? (
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Connected
-                  </span>
-                ) : (
-                  <span className="text-amber-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Reconnecting…
-                  </span>
-                )}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-[11px]">School Database</span>
+                <span className="inline-flex items-center gap-1 font-semibold text-[11px]">
+                  {dbStatus?.checking ? (
+                    <span className="text-amber-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" /> Checking…
+                    </span>
+                  ) : dbStatus?.success !== false ? (
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Connected
+                    </span>
+                  ) : (
+                    <span className="text-amber-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Reconnecting…
+                    </span>
+                  )}
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-[11px]">{copy.summaryLabel || 'Status'}</span>
+                <span className="inline-flex items-center gap-1 font-semibold text-[11px]">
+                  {statusCategory === 'connected' ? (
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {copy.summaryValue || 'Connected'}
+                    </span>
+                  ) : statusCategory === 'offline' ? (
+                    <span className="text-rose-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> {copy.summaryValue || 'Offline'}
+                    </span>
+                  ) : (
+                    <span className="text-amber-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {copy.summaryValue || 'Connecting…'}
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between gap-2 pt-1">
@@ -244,8 +394,8 @@ export const ConnectionStatusIndicator: React.FC<ConnectionStatusIndicatorProps>
               </button>
             )}
 
-            {/* Administrator Diagnostics Access */}
-            {currentUser?.role === 'admin' && onNavigateToDiagnostics && (
+            {/* Administrator Diagnostics Access (Strictly Admin Only) */}
+            {isAdmin && onNavigateToDiagnostics && (
               <button
                 type="button"
                 onClick={() => {
